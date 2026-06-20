@@ -170,3 +170,107 @@ CORS_ORIGINS=https://<your-frontend-site>.onrender.com
 ```
 
 Redeploy the backend.
+
+## Vercel Frontend + Railway Backend Deployment
+
+This is the lowest-cost polished setup:
+
+1. Railway hosts FastAPI, PostgreSQL, and persistent cover uploads.
+2. Vercel hosts the React/Vite frontend.
+
+### 1. Push the project to GitHub
+
+Both Railway and Vercel deploy from GitHub. Push this folder to a GitHub repository first.
+
+### 2. Create the Railway project
+
+In Railway:
+
+1. Create a new project.
+2. Add a PostgreSQL database service.
+3. Add a service from your GitHub repo for the backend.
+
+For the backend service, use:
+
+```text
+Root Directory: backend
+Build Command: python -m pip install -r requirements.txt
+Start Command: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+Add these backend variables:
+
+```text
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+ADMIN_PASSWORD=<a password you choose>
+CORS_ORIGINS=https://temporary.invalid
+UPLOAD_DIR=/data/uploads
+```
+
+Attach a Railway volume to the backend service:
+
+```text
+Mount Path: /data
+```
+
+Then open the backend service's Networking settings and generate a public Railway domain. Your backend URL will look like:
+
+```text
+https://your-backend.up.railway.app
+```
+
+Check:
+
+```text
+https://your-backend.up.railway.app/reviews
+```
+
+It should return `[]`.
+
+### 3. Create the Vercel frontend
+
+In Vercel:
+
+1. Import the same GitHub repo.
+2. Set the project root directory to `frontend`.
+3. Use the Vite defaults:
+
+```text
+Build Command: npm run build
+Output Directory: dist
+Install Command: npm install
+```
+
+Add this frontend environment variable:
+
+```text
+VITE_API_BASE_URL=https://your-backend.up.railway.app
+```
+
+Deploy the frontend. The included `frontend/vercel.json` file rewrites React Router routes back to `index.html`.
+
+### 4. Update Railway CORS
+
+After Vercel deploys, copy the Vercel production URL and update the Railway backend variable:
+
+```text
+CORS_ORIGINS=https://your-frontend.vercel.app
+```
+
+Redeploy the Railway backend.
+
+### 5. Test the deployed app
+
+Open:
+
+```text
+https://your-frontend.vercel.app
+```
+
+Then:
+
+```text
+https://your-frontend.vercel.app/admin
+```
+
+Enter the `ADMIN_PASSWORD` you set in Railway. Publish a review, upload a cover, edit it, and delete it once to confirm the full production flow.

@@ -48,6 +48,12 @@ def require_admin_password(x_admin_password: str | None):
         raise HTTPException(status_code=401, detail="Invalid admin password")
 
 
+@app.post("/admin/session")
+def verify_admin_session(x_admin_password: str | None = Header(None, alias="X-Admin-Password")):
+    require_admin_password(x_admin_password)
+    return {"ok": True}
+
+
 def normalize_category(category: str):
     normalized = category.strip().lower()
     if normalized not in ALLOWED_CATEGORIES:

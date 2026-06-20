@@ -5,7 +5,6 @@ import Navbar from "../components/Navbar.jsx";
 
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "reviewblog2025";
 const EMPTY_FORM = {
   title: "",
   author: "",
@@ -22,8 +21,10 @@ export default function Admin() {
   const navigate = useNavigate();
   const isEditing = Boolean(editId);
   const [password, setPassword] = useState("");
+  const [adminPassword, setAdminPassword] = useState(() => sessionStorage.getItem("review-admin-password") || "");
   const [gateError, setGateError] = useState("");
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("review-admin-unlocked") === "true");
+  const [unlocked, setUnlocked] = useState(() => Boolean(sessionStorage.getItem("review-admin-password")));
+  const [checkingPassword, setCheckingPassword] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [currentCoverUrl, setCurrentCoverUrl] = useState("");
   const [removeCover, setRemoveCover] = useState(false);
@@ -110,13 +111,36 @@ export default function Admin() {
     return `${API_BASE}${coverUrl}`;
   }
 
-  function unlockAdmin() {
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem("review-admin-unlocked", "true");
-      setUnlocked(true);
+  async function unlockAdmin() {
+    if (!password.trim()) {
+      setGateError("Enter the admin password");
+      return;
+    }
+
+    try {
+      setCheckingPassword(true);
       setGateError("");
-    } else {
-      setGateError("Incorrect password");
+      const response = await fetch(`${API_BASE}/admin/session`, {
+        method: "POST",
+        headers: {
+          "X-Admin-Password": password,
+        },
+      });
+
+      if (response.status === 401) {
+        throw new Error("Incorrect password");
+      }
+      if (!response.ok) {
+        throw new Error("Could not verify password");
+      }
+
+      sessionStorage.setItem("review-admin-password", password);
+      setAdminPassword(password);
+      setUnlocked(true);
+    } catch (err) {
+      setGateError(err.message || "Could not verify password");
+    } finally {
+      setCheckingPassword(false);
     }
   }
 
@@ -148,6 +172,10 @@ export default function Admin() {
       setStatus({ type: "error", message: "Title, author, excerpt, and review body are required." });
       return;
     }
+    if (!adminPassword) {
+      setStatus({ type: "error", message: "Admin session expired. Refresh and enter the password again." });
+      return;
+    }
 
     const payload = new FormData();
     payload.append("title", form.title);
@@ -167,7 +195,7 @@ export default function Admin() {
       const response = await fetch(isEditing ? `${API_BASE}/reviews/${editId}` : `${API_BASE}/reviews`, {
         method: isEditing ? "PUT" : "POST",
         headers: {
-          "X-Admin-Password": ADMIN_PASSWORD,
+          "X-Admin-Password": adminPassword,
         },
         body: payload,
       });
@@ -222,8 +250,8 @@ export default function Admin() {
               type="password"
               value={password}
             />
-            <button className="primary-button" type="button" onClick={unlockAdmin}>
-              Enter
+            <button className="primary-button" disabled={checkingPassword} type="button" onClick={unlockAdmin}>
+              {checkingPassword ? "Checking..." : "Enter"}
             </button>
             {gateError && <p className="status-line error">{gateError}</p>}
           </div>
