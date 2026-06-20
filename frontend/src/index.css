@@ -393,14 +393,10 @@ button {
 }
 
 .card-excerpt {
-  display: -webkit-box;
-  min-height: 1.6em;
   margin: 18px 0 0;
-  overflow: hidden;
   color: var(--text);
   line-height: 1.6;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  overflow-wrap: anywhere;
 }
 
 .read-more {
