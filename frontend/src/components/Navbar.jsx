@@ -15,7 +15,7 @@ export default function Navbar({ activeCategory = "all", onCategoryChange, showF
     <header className="navbar">
       <div className="navbar-inner">
         <Link className="wordmark" to="/">
-          Mimion Valley
+          Mimon Valley
         </Link>
 
         <nav className="nav-right" aria-label="Primary navigation">
