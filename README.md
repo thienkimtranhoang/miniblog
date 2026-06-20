@@ -1,4 +1,4 @@
-# Violet Margins Review Blog
+# Mimon Review Blog
 
 A personal review blog for long-form writing about books, movies, music, and other media. The app has a React/Vite frontend, a Python FastAPI backend, PostgreSQL storage, local cover uploads, and a small password-gated publishing page.
 

@@ -58,10 +58,10 @@ export default function Home() {
       <section className="hero">
         <div className="hero-aura" aria-hidden="true" />
         <div className="hero-content">
-          <h1>Reviews worth reading.</h1>
-          <p>A quiet corner of the internet for books, films, and things worth your time.</p>
+          <h1> reviews that may sound stupid </h1>
+          <p> may not really worth your time but hopefully not corny</p>
           <button className="primary-button" type="button" onClick={scrollToReviews}>
-            Latest Reviews ↓
+            latest ↓
           </button>
         </div>
       </section>
