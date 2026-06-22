@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import HeartButton from "../components/HeartButton.jsx";
 import Navbar from "../components/Navbar.jsx";
 
 
@@ -162,6 +163,7 @@ export default function ReviewPage() {
                 {renderStars(review.rating)}
               </div>
               <span className="review-date">{formatDate(review.created_at)}</span>
+              <HeartButton initialCount={review.hearts_count} reviewId={review.id} />
             </div>
 
             <div className="divider" />

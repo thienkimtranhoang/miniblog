@@ -197,6 +197,29 @@ button {
   line-height: 1.75;
 }
 
+.view-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 10px 14px;
+  border: 1px solid rgba(244, 201, 93, 0.42);
+  border-radius: 4px;
+  background: rgba(244, 201, 93, 0.08);
+  color: var(--muted);
+  font-family: "Fira Code", monospace;
+  font-size: 0.84rem;
+}
+
+.view-counter strong {
+  color: var(--gold);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
 .primary-button,
 .secondary-button,
 .danger-button,
@@ -382,6 +405,72 @@ button {
   gap: 2px;
   margin-top: 16px;
   font-size: 1rem;
+}
+
+.card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.card-meta-row .stars,
+.review-meta .stars {
+  margin-top: 0;
+}
+
+.heart-control {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  gap: 7px;
+  color: var(--muted);
+  font-family: "Fira Code", monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.heart-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(22, 16, 31, 0.84);
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1;
+  transition: transform 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out, background 200ms ease-out, color 200ms ease-out;
+}
+
+.heart-button:hover:not(:disabled),
+.heart-button.hearted {
+  border-color: var(--danger);
+  background: rgba(251, 113, 133, 0.1);
+  color: var(--danger);
+  box-shadow: 0 0 18px rgba(251, 113, 133, 0.14);
+}
+
+.heart-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.heart-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.heart-count {
+  min-width: 2ch;
+  color: var(--text);
+  font-weight: 700;
+  text-align: right;
+}
+
+.heart-error {
+  color: var(--danger);
 }
 
 .star-filled {

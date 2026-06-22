@@ -7,7 +7,17 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from database import create_review, delete_review, get_review, init_db, list_reviews, update_review
+from database import (
+    create_review,
+    delete_review,
+    get_review,
+    get_site_view_count,
+    increment_site_view_count,
+    init_db,
+    list_reviews,
+    set_review_heart,
+    update_review,
+)
 
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "reviewblog2025")
@@ -105,12 +115,38 @@ def read_reviews():
     return list_reviews()
 
 
+@app.get("/site-views")
+def read_site_views():
+    return {"views": get_site_view_count()}
+
+
+@app.post("/site-views")
+def record_site_view():
+    return {"views": increment_site_view_count()}
+
+
 @app.get("/reviews/{review_id}")
 def read_review(review_id: int):
     review = get_review(review_id)
     if review is None:
         raise HTTPException(status_code=404, detail="Review not found")
     return review
+
+
+@app.post("/reviews/{review_id}/heart")
+def heart_review(review_id: int):
+    review = set_review_heart(review_id, True)
+    if review is None:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return {"id": review_id, "hearts_count": review["hearts_count"]}
+
+
+@app.delete("/reviews/{review_id}/heart")
+def unheart_review(review_id: int):
+    review = set_review_heart(review_id, False)
+    if review is None:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return {"id": review_id, "hearts_count": review["hearts_count"]}
 
 
 @app.post("/reviews", status_code=201)

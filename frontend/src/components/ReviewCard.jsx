@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import HeartButton from "./HeartButton.jsx";
 
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -49,8 +50,11 @@ export default function ReviewCard({ review, index }) {
         <span className="category-tag">{formatCategory(category)}</span>
         <h2 className="card-title">{review.title}</h2>
         <p className="card-author">{review.author}</p>
-        <div className="stars" aria-label={`${review.rating} out of 5 stars`}>
-          {renderStars(review.rating)}
+        <div className="card-meta-row">
+          <div className="stars" aria-label={`${review.rating} out of 5 stars`}>
+            {renderStars(review.rating)}
+          </div>
+          <HeartButton initialCount={review.hearts_count} reviewId={review.id} />
         </div>
         <p className="card-excerpt">{review.excerpt}</p>
         <Link className="read-more" to={`/review/${review.id}`}>

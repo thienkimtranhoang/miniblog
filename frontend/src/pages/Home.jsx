@@ -4,6 +4,26 @@ import ReviewCard from "../components/ReviewCard.jsx";
 
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+let siteViewRequest = null;
+
+
+async function recordSiteView() {
+  if (!siteViewRequest) {
+    siteViewRequest = fetch(`${API_BASE}/site-views`, { method: "POST" })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Could not load view count");
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        siteViewRequest = null;
+        throw error;
+      });
+  }
+
+  return siteViewRequest;
+}
 
 
 export default function Home() {
@@ -11,6 +31,8 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [viewCount, setViewCount] = useState(null);
+  const [viewCountError, setViewCountError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -40,6 +62,30 @@ export default function Home() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadViewCount() {
+      try {
+        setViewCountError("");
+        const data = await recordSiteView();
+        if (active) {
+          setViewCount(Number(data.views) || 0);
+        }
+      } catch (err) {
+        if (active) {
+          setViewCountError(err.message || "Could not load view count");
+        }
+      }
+    }
+
+    loadViewCount();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const visibleReviews = useMemo(() => {
     if (activeCategory === "all") {
       return reviews;
@@ -60,6 +106,10 @@ export default function Home() {
         <div className="hero-content">
           <h1> reviews that may sound stupid </h1>
           <p> may not really worth your time but hopefully not corny</p>
+          <div className="view-counter" aria-live="polite">
+            <span>Số lượng mỹ hùng đã ghé blog:</span>
+            <strong>{viewCountError ? "--" : viewCount === null ? "..." : viewCount.toLocaleString("vi-VN")}</strong>
+          </div>
           <button className="primary-button" type="button" onClick={scrollToReviews}>
             latest ↓
           </button>

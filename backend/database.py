@@ -24,6 +24,7 @@ def init_db():
                     author TEXT NOT NULL,
                     category TEXT NOT NULL CHECK (category IN ('book', 'movie', 'music', 'other')),
                     rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+                    hearts_count INTEGER NOT NULL DEFAULT 0 CHECK (hearts_count >= 0),
                     excerpt TEXT NOT NULL,
                     body TEXT NOT NULL,
                     cover_url TEXT,
@@ -37,6 +38,59 @@ def init_db():
                 ON reviews (created_at DESC, id DESC)
                 """
             )
+            cursor.execute(
+                """
+                ALTER TABLE reviews
+                ADD COLUMN IF NOT EXISTS hearts_count INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS site_stats (
+                    name TEXT PRIMARY KEY,
+                    value INTEGER NOT NULL DEFAULT 0,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cursor.execute(
+                """
+                INSERT INTO site_stats (name, value)
+                VALUES ('home_views', 0)
+                ON CONFLICT (name) DO NOTHING
+                """
+            )
+
+
+def get_site_view_count():
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT value
+                FROM site_stats
+                WHERE name = 'home_views'
+                """
+            )
+            row = cursor.fetchone()
+            return row["value"] if row else 0
+
+
+def increment_site_view_count():
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO site_stats (name, value, updated_at)
+                VALUES ('home_views', 1, NOW())
+                ON CONFLICT (name)
+                DO UPDATE SET
+                    value = site_stats.value + 1,
+                    updated_at = NOW()
+                RETURNING value
+                """
+            )
+            return cursor.fetchone()["value"]
 
 
 def list_reviews():
@@ -44,7 +98,7 @@ def list_reviews():
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, title, author, category, rating, excerpt, cover_url, created_at
+                SELECT id, title, author, category, rating, hearts_count, excerpt, cover_url, created_at
                 FROM reviews
                 ORDER BY created_at DESC, id DESC
                 """
@@ -57,7 +111,7 @@ def get_review(review_id):
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, title, author, category, rating, excerpt, body, cover_url, created_at
+                SELECT id, title, author, category, rating, hearts_count, excerpt, body, cover_url, created_at
                 FROM reviews
                 WHERE id = %s
                 """,
@@ -73,7 +127,7 @@ def create_review(title, author, category, rating, excerpt, body, cover_url, cre
                 """
                 INSERT INTO reviews (title, author, category, rating, excerpt, body, cover_url, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id, title, author, category, rating, excerpt, body, cover_url, created_at
+                RETURNING id, title, author, category, rating, hearts_count, excerpt, body, cover_url, created_at
                 """,
                 (title, author, category, rating, excerpt, body, cover_url, created_at),
             )
@@ -94,10 +148,36 @@ def update_review(review_id, title, author, category, rating, excerpt, body, cov
                     body = %s,
                     cover_url = %s
                 WHERE id = %s
-                RETURNING id, title, author, category, rating, excerpt, body, cover_url, created_at
+                RETURNING id, title, author, category, rating, hearts_count, excerpt, body, cover_url, created_at
                 """,
                 (title, author, category, rating, excerpt, body, cover_url, review_id),
             )
+            return cursor.fetchone()
+
+
+def set_review_heart(review_id, hearted):
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            if hearted:
+                cursor.execute(
+                    """
+                    UPDATE reviews
+                    SET hearts_count = hearts_count + 1
+                    WHERE id = %s
+                    RETURNING hearts_count
+                    """,
+                    (review_id,),
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE reviews
+                    SET hearts_count = GREATEST(hearts_count - 1, 0)
+                    WHERE id = %s
+                    RETURNING hearts_count
+                    """,
+                    (review_id,),
+                )
             return cursor.fetchone()
 
 
@@ -108,7 +188,7 @@ def delete_review(review_id):
                 """
                 DELETE FROM reviews
                 WHERE id = %s
-                RETURNING id, title, author, category, rating, excerpt, body, cover_url, created_at
+                RETURNING id, title, author, category, rating, hearts_count, excerpt, body, cover_url, created_at
                 """,
                 (review_id,),
             )
